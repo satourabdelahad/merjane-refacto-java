@@ -1,54 +1,38 @@
-package com.nimbleways.springboilerplate.contollers;
+package com.nimbleways.springboilerplate.services.implementations;
 
-import com.nimbleways.springboilerplate.dto.product.ProcessOrderResponse;
 import com.nimbleways.springboilerplate.entities.Order;
 import com.nimbleways.springboilerplate.entities.Product;
 import com.nimbleways.springboilerplate.repositories.OrderRepository;
-import com.nimbleways.springboilerplate.repositories.ProductRepository;
-import com.nimbleways.springboilerplate.services.implementations.ProductService;
+import org.springframework.stereotype.Service;
 
 import java.time.Clock;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseStatus;
-import org.springframework.web.bind.annotation.RestController;
+@Service
+public class OrderService {
+    private final Clock clock;
+    private final OrderRepository orderRepository;
+    private final ProductService productService;
 
-@RestController
-@RequestMapping("/orders")
-public class MyController {
-    @Autowired
-    private ProductService productService;
+    public OrderService(Clock clock,
+                            OrderRepository orderRepository,
+                            ProductService productService){
+        this.clock = clock;
+        this.orderRepository = orderRepository;
+        this.productService = productService;
+    }
 
-    @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private OrderRepository orderRepository;
-
-    @Autowired
-    Clock clock;
-
-    @PostMapping("{orderId}/processOrder")
-    @ResponseStatus(HttpStatus.OK)
-    public ProcessOrderResponse processOrder(@PathVariable Long orderId) {
+    public Long processOrder(Long orderId) {
         Order order = orderRepository.findById(orderId).get();
         System.out.println(order);
-        List<Long> ids = new ArrayList<>();
-        ids.add(orderId);
         Set<Product> products = order.getItems();
         for (Product product : products) {
+
             if (product.getType().equals("NORMAL")) {
                 if (product.getAvailable() > 0) {
                     product.setAvailable(product.getAvailable() - 1);
-                    productRepository.save(product);
+                    productService.save(product);
                 } else {
                     int leadTime = product.getLeadTime();
                     if (leadTime > 0) {
@@ -60,20 +44,19 @@ public class MyController {
                 if ((LocalDate.now(clock).isAfter(product.getSeasonStartDate()) && LocalDate.now(clock).isBefore(product.getSeasonEndDate())
                         && product.getAvailable() > 0)) {
                     product.setAvailable(product.getAvailable() - 1);
-                    productRepository.save(product);
+                    productService.save(product);
                 } else {
                     productService.handleSeasonalProduct(product);
                 }
             } else if (product.getType().equals("EXPIRABLE")) {
                 if (product.getAvailable() > 0 && product.getExpiryDate().isAfter(LocalDate.now(clock))) {
                     product.setAvailable(product.getAvailable() - 1);
-                    productRepository.save(product);
+                    productService.save(product);
                 } else {
                     productService.handleExpiredProduct(product);
                 }
             }
         }
-
-        return new ProcessOrderResponse(order.getId());
+        return order.getId();
     }
 }

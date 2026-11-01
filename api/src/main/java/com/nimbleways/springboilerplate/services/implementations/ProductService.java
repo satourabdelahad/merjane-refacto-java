@@ -21,6 +21,10 @@ public class ProductService {
     @Autowired
     Clock clock;
 
+    public Product save(Product product){
+        return productRepository.save(product);
+    }
+
     public void notifyDelay(int leadTime, Product p) {
         p.setLeadTime(leadTime);
         productRepository.save(p);
