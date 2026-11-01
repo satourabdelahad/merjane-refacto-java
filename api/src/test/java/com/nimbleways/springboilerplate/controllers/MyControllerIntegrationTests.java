@@ -52,7 +52,7 @@ public class MyControllerIntegrationTests {
         void should_decrement_stock_when_normal_product_is_in_stock() throws Exception {
             // GIVEN : un seul produit NORMAL avec 30 en stock
             Product product = productRepository.save(
-                    new Product(null, 15, 30, ProductType.NORMAL, "USB C", null, null, null));
+                    new Product(null, 15, 30, ProductType.NORMAL, "USB Cable", null, null, null));
             Order order = orderRepository.save(createOrder(Set.of(product)));
 
             // WHEN
@@ -71,13 +71,13 @@ public class MyControllerIntegrationTests {
         @Test
         void should_notify_delay_when_normal_product_is_out_of_stock() throws Exception {
             Product product = productRepository.save(
-                    new Product(null, 10, 0, ProductType.NORMAL, "USB Hub", null, null, null));
+                    new Product(null, 10, 0, ProductType.NORMAL, "USB Dongle", null, null, null));
 
             Product result = processSingleProductOrder(product);
 
             Assertions.assertEquals(0, result.getAvailable());
             Assertions.assertEquals(10, result.getLeadTime());
-            Mockito.verify(notificationService).sendDelayNotification(10, "USB Hub");
+            Mockito.verify(notificationService).sendDelayNotification(10, "USB Dongle");
             Mockito.verifyNoMoreInteractions(notificationService);
         }
 
@@ -85,7 +85,7 @@ public class MyControllerIntegrationTests {
         void should_do_nothing_when_normal_product_is_out_of_stock_and_lead_time_is_zero() throws Exception {
             // Comportement legacy : aucune notification on fait rien si leadTime = 0
             Product product = productRepository.save(
-                    new Product(null, 0, 0, ProductType.NORMAL, "USB C", null, null, null));
+                    new Product(null, 0, 0, ProductType.NORMAL, "USB Hub", null, null, null));
 
             Product result = processSingleProductOrder(product);
 
@@ -96,7 +96,7 @@ public class MyControllerIntegrationTests {
         // ---------- SEASONAL ----------
         @Test
         void should_decrement_stock_when_seasonal_product_is_in_season_and_in_stock() throws Exception {
-            Product product = productRepository.save(new Product(null, 15, 30, ProductType.SEASONAL, "Avocado",
+            Product product = productRepository.save(new Product(null, 15, 30, ProductType.SEASONAL, "Watermelon",
                     null, LocalDate.now().minusDays(2), LocalDate.now().plusDays(58)));
 
             Product result = processSingleProductOrder(product);
@@ -146,7 +146,7 @@ public class MyControllerIntegrationTests {
         // ---------- EXPIRABLE ----------
         @Test
         void should_decrement_stock_when_expirable_product_is_not_expired_and_in_stock() throws Exception {
-            Product product = productRepository.save(new Product(null, 15, 30, ProductType.EXPIRABLE, "Milk",
+            Product product = productRepository.save(new Product(null, 15, 30, ProductType.EXPIRABLE, "Butter",
                     LocalDate.now().plusDays(26), null, null));
 
             Product result = processSingleProductOrder(product);
@@ -158,13 +158,13 @@ public class MyControllerIntegrationTests {
         @Test
         void should_notify_expiration_and_empty_stock_when_expirable_product_is_expired() throws Exception {
             LocalDate expiryDate = LocalDate.now().minusDays(2);
-            Product product = productRepository.save(new Product(null, 90, 6, ProductType.EXPIRABLE, "Yagourt",
+            Product product = productRepository.save(new Product(null, 90, 6, ProductType.EXPIRABLE, "Milk",
                     expiryDate, null, null));
 
             Product result = processSingleProductOrder(product);
 
             Assertions.assertEquals(0, result.getAvailable());
-            Mockito.verify(notificationService).sendExpirationNotification("Yagourt", expiryDate);
+            Mockito.verify(notificationService).sendExpirationNotification("Milk", expiryDate);
             Mockito.verifyNoMoreInteractions(notificationService);
         }
 
