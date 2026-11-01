@@ -25,3 +25,4 @@ Chaque produit est caractérisé par un niveau de stock (available) décrément�
 - Je ne dois pas injecter Clock dans les tests, je ne dois pas modifier le comportement attendu des tests
 - Je dois injecter par constructeur pour Order Service car les dépendences sont obligatires
 - j'ai crée un enum type ProductType { NORMAL, SEASONAL, EXPIRABLE }
+- Design Pattern stratégy au lieu de if else, NormalProductHandler, SeasonalProductHandler et ExpirableProductHandler et mappés dans la boucle for
