@@ -24,48 +24,48 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/orders")
 public class MyController {
     @Autowired
-    private ProductService ps;
+    private ProductService productService;
 
     @Autowired
-    private ProductRepository pr;
+    private ProductRepository productRepository;
 
     @Autowired
-    private OrderRepository or;
+    private OrderRepository orderRepository;
 
     @PostMapping("{orderId}/processOrder")
     @ResponseStatus(HttpStatus.OK)
     public ProcessOrderResponse processOrder(@PathVariable Long orderId) {
-        Order order = or.findById(orderId).get();
+        Order order = orderRepository.findById(orderId).get();
         System.out.println(order);
         List<Long> ids = new ArrayList<>();
         ids.add(orderId);
         Set<Product> products = order.getItems();
-        for (Product p : products) {
-            if (p.getType().equals("NORMAL")) {
-                if (p.getAvailable() > 0) {
-                    p.setAvailable(p.getAvailable() - 1);
-                    pr.save(p);
+        for (Product product : products) {
+            if (product.getType().equals("NORMAL")) {
+                if (product.getAvailable() > 0) {
+                    product.setAvailable(product.getAvailable() - 1);
+                    productRepository.save(product);
                 } else {
-                    int leadTime = p.getLeadTime();
+                    int leadTime = product.getLeadTime();
                     if (leadTime > 0) {
-                        ps.notifyDelay(leadTime, p);
+                        productService.notifyDelay(leadTime, product);
                     }
                 }
-            } else if (p.getType().equals("SEASONAL")) {
+            } else if (product.getType().equals("SEASONAL")) {
                 // Add new season rules
-                if ((LocalDate.now().isAfter(p.getSeasonStartDate()) && LocalDate.now().isBefore(p.getSeasonEndDate())
-                        && p.getAvailable() > 0)) {
-                    p.setAvailable(p.getAvailable() - 1);
-                    pr.save(p);
+                if ((LocalDate.now().isAfter(product.getSeasonStartDate()) && LocalDate.now().isBefore(product.getSeasonEndDate())
+                        && product.getAvailable() > 0)) {
+                    product.setAvailable(product.getAvailable() - 1);
+                    productRepository.save(product);
                 } else {
-                    ps.handleSeasonalProduct(p);
+                    productService.handleSeasonalProduct(product);
                 }
-            } else if (p.getType().equals("EXPIRABLE")) {
-                if (p.getAvailable() > 0 && p.getExpiryDate().isAfter(LocalDate.now())) {
-                    p.setAvailable(p.getAvailable() - 1);
-                    pr.save(p);
+            } else if (product.getType().equals("EXPIRABLE")) {
+                if (product.getAvailable() > 0 && product.getExpiryDate().isAfter(LocalDate.now())) {
+                    product.setAvailable(product.getAvailable() - 1);
+                    productRepository.save(product);
                 } else {
-                    ps.handleExpiredProduct(p);
+                    productService.handleExpiredProduct(product);
                 }
             }
         }
