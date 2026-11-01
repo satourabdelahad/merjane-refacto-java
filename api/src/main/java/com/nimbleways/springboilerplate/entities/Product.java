@@ -24,8 +24,10 @@ public class Product {
     @Column(name = "available")
     private Integer available;
 
+    // "NORMAL", "SEASONAL" or "EXPIRABLE"
     @Column(name = "type")
-    private String type;
+    @Enumerated(EnumType.STRING)
+    private ProductType type;
 
     @Column(name = "name")
     private String name;
