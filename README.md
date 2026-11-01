@@ -23,4 +23,5 @@ Chaque produit est caractérisé par un niveau de stock (available) décrément�
 - Tous les commits sont atomiques, à la fin je vais merger avec rebase la branche refactor/order-workflow dans main
 - J'ai injecté Clock en tant que Bean avec valeur Clock.systemDefaultZone(); je vais dorénavant Remplace chaque LocalDate.now() par LocalDate.now(clock)
 - Je ne dois pas injecter Clock dans les tests, je ne dois pas modifier le comportement attendu des tests
-- Je dois injecter par constructeur car les dépendences sont obligatires
+- Je dois injecter par constructeur pour Order Service car les dépendences sont obligatires
+- 

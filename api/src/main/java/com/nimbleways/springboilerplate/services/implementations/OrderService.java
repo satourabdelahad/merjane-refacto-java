@@ -2,6 +2,7 @@ package com.nimbleways.springboilerplate.services.implementations;
 
 import com.nimbleways.springboilerplate.entities.Order;
 import com.nimbleways.springboilerplate.entities.Product;
+import com.nimbleways.springboilerplate.entities.ProductType;
 import com.nimbleways.springboilerplate.repositories.OrderRepository;
 import org.springframework.stereotype.Service;
 
@@ -29,7 +30,7 @@ public class OrderService {
         Set<Product> products = order.getItems();
         for (Product product : products) {
 
-            if (product.getType().equals("NORMAL")) {
+            if (product.getType() == ProductType.NORMAL) {
                 if (product.getAvailable() > 0) {
                     product.setAvailable(product.getAvailable() - 1);
                     productService.save(product);
@@ -39,7 +40,7 @@ public class OrderService {
                         productService.notifyDelay(leadTime, product);
                     }
                 }
-            } else if (product.getType().equals("SEASONAL")) {
+            } else if (product.getType() == ProductType.SEASONAL) {
                 // Add new season rules
                 if ((LocalDate.now(clock).isAfter(product.getSeasonStartDate()) && LocalDate.now(clock).isBefore(product.getSeasonEndDate())
                         && product.getAvailable() > 0)) {
@@ -48,7 +49,7 @@ public class OrderService {
                 } else {
                     productService.handleSeasonalProduct(product);
                 }
-            } else if (product.getType().equals("EXPIRABLE")) {
+            } else if (product.getType() == ProductType.EXPIRABLE) {
                 if (product.getAvailable() > 0 && product.getExpiryDate().isAfter(LocalDate.now(clock))) {
                     product.setAvailable(product.getAvailable() - 1);
                     productService.save(product);

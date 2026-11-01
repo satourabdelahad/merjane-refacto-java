@@ -2,6 +2,7 @@ package com.nimbleways.springboilerplate.controllers;
 
 import com.nimbleways.springboilerplate.entities.Order;
 import com.nimbleways.springboilerplate.entities.Product;
+import com.nimbleways.springboilerplate.entities.ProductType;
 import com.nimbleways.springboilerplate.repositories.OrderRepository;
 import com.nimbleways.springboilerplate.repositories.ProductRepository;
 import com.nimbleways.springboilerplate.services.implementations.NotificationService;
@@ -51,7 +52,7 @@ public class MyControllerIntegrationTests {
         void should_decrement_stock_when_normal_product_is_in_stock() throws Exception {
             // GIVEN : un seul produit NORMAL avec 30 en stock
             Product product = productRepository.save(
-                    new Product(null, 15, 30, "NORMAL", "USB C", null, null, null));
+                    new Product(null, 15, 30, ProductType.NORMAL, "USB C", null, null, null));
             Order order = orderRepository.save(createOrder(Set.of(product)));
 
             // WHEN
@@ -70,7 +71,7 @@ public class MyControllerIntegrationTests {
         @Test
         void should_notify_delay_when_normal_product_is_out_of_stock() throws Exception {
             Product product = productRepository.save(
-                    new Product(null, 10, 0, "NORMAL", "USB Hub", null, null, null));
+                    new Product(null, 10, 0, ProductType.NORMAL, "USB Hub", null, null, null));
 
             Product result = processSingleProductOrder(product);
 
@@ -84,7 +85,7 @@ public class MyControllerIntegrationTests {
         void should_do_nothing_when_normal_product_is_out_of_stock_and_lead_time_is_zero() throws Exception {
             // Comportement legacy : aucune notification on fait rien si leadTime = 0
             Product product = productRepository.save(
-                    new Product(null, 0, 0, "NORMAL", "USB C", null, null, null));
+                    new Product(null, 0, 0, ProductType.NORMAL, "USB C", null, null, null));
 
             Product result = processSingleProductOrder(product);
 
@@ -95,7 +96,7 @@ public class MyControllerIntegrationTests {
         // ---------- SEASONAL ----------
         @Test
         void should_decrement_stock_when_seasonal_product_is_in_season_and_in_stock() throws Exception {
-            Product product = productRepository.save(new Product(null, 15, 30, "SEASONAL", "Avocado",
+            Product product = productRepository.save(new Product(null, 15, 30, ProductType.SEASONAL, "Avocado",
                     null, LocalDate.now().minusDays(2), LocalDate.now().plusDays(58)));
 
             Product result = processSingleProductOrder(product);
@@ -106,7 +107,7 @@ public class MyControllerIntegrationTests {
 
     @Test
     void should_notify_delay_when_seasonal_product_is_out_of_stock_and_restock_is_within_season() throws Exception {
-        Product product = productRepository.save(new Product(null, 15, 0, "SEASONAL", "Watermelon",
+        Product product = productRepository.save(new Product(null, 15, 0, ProductType.SEASONAL, "Watermelon",
                 null, LocalDate.now().minusDays(2), LocalDate.now().plusDays(58)));
 
         Product result = processSingleProductOrder(product);
@@ -118,7 +119,7 @@ public class MyControllerIntegrationTests {
 
     @Test
     void should_notify_out_of_stock_when_seasonal_product_restock_exceeds_season_end() throws Exception {
-        Product product = productRepository.save(new Product(null, 30, 0, "SEASONAL", "Strawberry",
+        Product product = productRepository.save(new Product(null, 30, 0, ProductType.SEASONAL, "Strawberry",
                 null, LocalDate.now().minusDays(2), LocalDate.now().plusDays(10)));
 
         Product result = processSingleProductOrder(product);
@@ -145,7 +146,7 @@ public class MyControllerIntegrationTests {
         // ---------- EXPIRABLE ----------
         @Test
         void should_decrement_stock_when_expirable_product_is_not_expired_and_in_stock() throws Exception {
-            Product product = productRepository.save(new Product(null, 15, 30, "EXPIRABLE", "Milk",
+            Product product = productRepository.save(new Product(null, 15, 30, ProductType.EXPIRABLE, "Milk",
                     LocalDate.now().plusDays(26), null, null));
 
             Product result = processSingleProductOrder(product);
@@ -157,7 +158,7 @@ public class MyControllerIntegrationTests {
         @Test
         void should_notify_expiration_and_empty_stock_when_expirable_product_is_expired() throws Exception {
             LocalDate expiryDate = LocalDate.now().minusDays(2);
-            Product product = productRepository.save(new Product(null, 90, 6, "EXPIRABLE", "Yagourt",
+            Product product = productRepository.save(new Product(null, 90, 6, ProductType.EXPIRABLE, "Yagourt",
                     expiryDate, null, null));
 
             Product result = processSingleProductOrder(product);
@@ -171,7 +172,7 @@ public class MyControllerIntegrationTests {
         void should_notify_expiration_when_expirable_product_is_not_expired_but_out_of_stock() throws Exception {
             // Comportement legacy (bug probable) : une rupture de stock est signalée comme une expiration.
             LocalDate expiryDate = LocalDate.now().plusDays(10);
-            Product product = productRepository.save(new Product(null, 5, 0, "EXPIRABLE", "Yogurt",
+            Product product = productRepository.save(new Product(null, 5, 0, ProductType.EXPIRABLE, "Yogurt",
                     expiryDate, null, null));
 
             Product result = processSingleProductOrder(product);
@@ -197,14 +198,14 @@ public class MyControllerIntegrationTests {
 
         private static List<Product> createProducts() {
                 List<Product> products = new ArrayList<>();
-                products.add(new Product(null, 15, 30, "NORMAL", "USB Cable", null, null, null));
-                products.add(new Product(null, 10, 0, "NORMAL", "USB Dongle", null, null, null));
-                products.add(new Product(null, 15, 30, "EXPIRABLE", "Butter", LocalDate.now().plusDays(26), null,
+                products.add(new Product(null, 15, 30, ProductType.NORMAL, "USB Cable", null, null, null));
+                products.add(new Product(null, 10, 0, ProductType.NORMAL, "USB Dongle", null, null, null));
+                products.add(new Product(null, 15, 30, ProductType.EXPIRABLE, "Butter", LocalDate.now().plusDays(26), null,
                                 null));
-                products.add(new Product(null, 90, 6, "EXPIRABLE", "Milk", LocalDate.now().minusDays(2), null, null));
-                products.add(new Product(null, 15, 30, "SEASONAL", "Watermelon", null, LocalDate.now().minusDays(2),
+                products.add(new Product(null, 90, 6, ProductType.EXPIRABLE, "Milk", LocalDate.now().minusDays(2), null, null));
+                products.add(new Product(null, 15, 30, ProductType.SEASONAL, "Watermelon", null, LocalDate.now().minusDays(2),
                                 LocalDate.now().plusDays(58)));
-                products.add(new Product(null, 15, 30, "SEASONAL", "Grapes", null, LocalDate.now().plusDays(180),
+                products.add(new Product(null, 15, 30,  ProductType.SEASONAL, "Grapes", null, LocalDate.now().plusDays(180),
                                 LocalDate.now().plusDays(240)));
                 return products;
         }
