@@ -142,6 +142,45 @@ public class MyControllerIntegrationTests {
                 assertEquals(resultOrder.getId(), order.getId());
         }
 
+        // ---------- EXPIRABLE ----------
+        @Test
+        void should_decrement_stock_when_expirable_product_is_not_expired_and_in_stock() throws Exception {
+            Product product = productRepository.save(new Product(null, 15, 30, "EXPIRABLE", "Milk",
+                    LocalDate.now().plusDays(26), null, null));
+
+            Product result = processSingleProductOrder(product);
+
+            Assertions.assertEquals(29, result.getAvailable());
+            Mockito.verifyNoInteractions(notificationService);
+        }
+
+        @Test
+        void should_notify_expiration_and_empty_stock_when_expirable_product_is_expired() throws Exception {
+            LocalDate expiryDate = LocalDate.now().minusDays(2);
+            Product product = productRepository.save(new Product(null, 90, 6, "EXPIRABLE", "Yagourt",
+                    expiryDate, null, null));
+
+            Product result = processSingleProductOrder(product);
+
+            Assertions.assertEquals(0, result.getAvailable());
+            Mockito.verify(notificationService).sendExpirationNotification("Yagourt", expiryDate);
+            Mockito.verifyNoMoreInteractions(notificationService);
+        }
+
+        @Test
+        void should_notify_expiration_when_expirable_product_is_not_expired_but_out_of_stock() throws Exception {
+            // Comportement legacy (bug probable) : une rupture de stock est signalée comme une expiration.
+            LocalDate expiryDate = LocalDate.now().plusDays(10);
+            Product product = productRepository.save(new Product(null, 5, 0, "EXPIRABLE", "Yogurt",
+                    expiryDate, null, null));
+
+            Product result = processSingleProductOrder(product);
+
+            Assertions.assertEquals(0, result.getAvailable());
+            Mockito.verify(notificationService).sendExpirationNotification("Yogurt", expiryDate);
+            Mockito.verifyNoMoreInteractions(notificationService);
+        }
+
         private Product processSingleProductOrder(Product product) throws Exception {
             Order order = orderRepository.save(createOrder(Set.of(product)));
             mockMvc.perform(post("/orders/{orderId}/processOrder", order.getId())
